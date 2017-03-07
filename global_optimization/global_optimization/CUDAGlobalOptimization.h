@@ -74,7 +74,7 @@ void fnGetOptValueWithCUDA(double *inBox, int inRank, int inNumBoxesSplitCoeff, 
 */
 void sendDataToCuda(double *outLimits, const double *inBox, int inRank, int inFunc, int inNumBoxes);
 
-__global__ void calculateLimitsOnCUDA(double *outLimits, const double *inBox,int inRank,int inFunc);
+__global__ void calculateLimitsOnCUDA(double *outLimits, const double *inBox,int inRank,int inFunc, int numBoxes);
 
 __device__ double fnCalcFunMultiple2_CUDA(const double *inBox, int inRank)
 {
@@ -237,38 +237,38 @@ __device__ void fnCalcFunLimitsRozenbroke_CUDA(const double *inBox, int inRank, 
 	}
 
 	
-	//double *x;
-	//x = (double *) malloc(inRank*sizeof(double));
-	//double minFun;
-	//int index;
-	//double md;
-	//double pw;
-	//double a1;
-	//double b1;
-	//int numFunValues = __double2int_rd(pow(2.0,__int2double_rn(inRank)));
+	double *x;
+	x = (double *) malloc(inRank*sizeof(double));
+	double minFun;
+	int index;
+	double md;
+	double pw;
+	double a1;
+	double b1;
+	int numFunValues = __double2int_rd(pow(2.0,__int2double_rn(inRank)));
 
-	//for(j = 0; j < inRank; j++){
-	//		x[j] = (inBox[j*2]+inBox[j*2+1])/2.0;
-	//}
-	//minFun = fnCalcFunRozenbroke_CUDA(x, inRank);
-	//for(i = 0; i < numFunValues; i++){
-	//	for(j = 0; j < inRank; j++){
-	//		a1 = __int2double_rn(i);
-	//		b1 = __int2double_rn(j+1);
-	//		md = fmod(a1,pow(2.0,b1));
-	//		pw = pow(2.0,__int2double_rn(b1-1.0));
-	//		index = __double2int_rd(md / pw);
-	//		x[j] = inBox[j*2+index];
-	//	}
-	//	val = fnCalcFunRozenbroke_CUDA(x, inRank);
-	//	if(minFun > val) minFun = val;
-	//}
+	for(j = 0; j < inRank; j++){
+			x[j] = (inBox[j*2]+inBox[j*2+1])/2.0;
+	}
+	minFun = fnCalcFunRozenbroke_CUDA(x, inRank);
+	for(i = 0; i < numFunValues; i++){
+		for(j = 0; j < inRank; j++){
+			a1 = __int2double_rn(i);
+			b1 = __int2double_rn(j+1);
+			md = fmod(a1,pow(2.0,b1));
+			pw = pow(2.0,__int2double_rn(b1-1.0));
+			index = __double2int_rd(md / pw);
+			x[j] = inBox[j*2+index];
+		}
+		val = fnCalcFunRozenbroke_CUDA(x, inRank);
+		if(minFun > val) minFun = val;
+	}
 
-	/*free(x);
-*/
-	outLimits[0] = inBox[0];
+	free(x);
+
+	outLimits[0] = sub;
 	outLimits[1] = sup;
-	outLimits[2] = inBox[1];
+	outLimits[2] = minFun;
 }
 
 
@@ -301,7 +301,7 @@ void fnGetOptValueWithCUDA(double *inBox, int inRank, int inNumBoxesSplitCoeff, 
 	*status = 1;
 	while((countIter < inMaxIter) && (curEps >= inEps))
 	{
-		/*curNumBoxesSplitCoeff = (int) (inNumBoxesSplitCoeff/pow(numRestBoxes,1.0/inRank)) + 2;
+		curNumBoxesSplitCoeff = (int) (inNumBoxesSplitCoeff/pow(numRestBoxes,1.0/inRank)) + 2;
 		numBoxes = pow((double) curNumBoxesSplitCoeff,inRank);
 		boxes = new double[numRestBoxes*numBoxes*inRank*2];
 		boxesResult = new double[numRestBoxes*numBoxes*3];
@@ -320,48 +320,11 @@ void fnGetOptValueWithCUDA(double *inBox, int inRank, int inNumBoxesSplitCoeff, 
 					boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2] + h[i]*index;
 					boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2] + h[i]*(index+1);
 				}
-			}
-		}*/
-
-				curNumBoxesSplitCoeff = 8;//(int) (inNumBoxesSplitCoeff/pow(numRestBoxes,1.0/inRank)) + 2;
-		numBoxes = pow((double) curNumBoxesSplitCoeff,inRank);
-		boxes = new double[numRestBoxes*numBoxes*inRank*2];
-		boxesResult = new double[numRestBoxes*numBoxes*3];
-		for(k = 0; k < numRestBoxes; k++)
-		{
-			for(i = 0; i < inRank; i++)
-			{
-				h[i] = (restBoxes[(k*inRank+i)*2 + 1] - restBoxes[(k*inRank+i)*2])/curNumBoxesSplitCoeff;
-			}
-			#pragma omp parallel for num_threads(5) private(index,i)
-			for(n = 0; n < numBoxes; n++)
-			{
-				for(i = 0; i < inRank; i++)
-				{
-					index = ((n % numBoxes) % (long) pow((double)curNumBoxesSplitCoeff,i+1))/((long)pow((double)curNumBoxesSplitCoeff,i));
-					boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2] + h[i]*index;
-					boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2] + h[i]*(index+1);
-					//std::cout << "[" << boxes[((k*numBoxes + n)*inRank+i)*2] << ";" << boxes[((k*numBoxes + n)*inRank+i)*2 + 1] << "]\t";
-				}
-				//inFun(&boxes[((k*numBoxes + n)*inRank)*2],inRank,&boxesResult[(k*numBoxes + n)*3]);
-				//std::cout <<  "\n";
 			}
 		}
-
-
-
 
 		sendDataToCuda(boxesResult, boxes, inRank, inFunc, numRestBoxes*numBoxes);
 
-		for(n = 0; n < numRestBoxes*numBoxes; n++)
-		{
-			for(j=0; j < inRank; j++)
-			{
-				std::cout << "[" << boxes[(n*inRank+j)*2] << ";" << boxes[(n*inRank+j)*2 + 1] << "] ";
-			}
-			
-			std::cout << boxesResult[n*3] << " " << boxesResult[n*3+2] << " " << "\n";
-		}
 		funcMin = boxesResult[2];
 		boxMinIndex = 0;
 		for(n = 0; n < numRestBoxes*numBoxes; n++)
@@ -395,15 +358,17 @@ void fnGetOptValueWithCUDA(double *inBox, int inRank, int inNumBoxesSplitCoeff, 
 				}
 				if(funcMin > boxesResult[n*3 + 2] ) {funcMin = boxesResult[n*3+2];boxMinIndex = n;}
 			}
+
 			if(funcMin < boxesResult[n*3]) break;
 		}
 
-		std::cout << boxesResult[n*3] << "\t" << boxesResult[n*3+2] << "\t" << funcMin << "\n\n";
+		//std::cout << boxesResult[0] << "\t" << boxesResult[n*3+2] << "\t" << funcMin << "\n\n";
 
 		curEps = std::abs(boxesResult[0] - funcMin);
 		*outEps = curEps;
 		*outMin = funcMin;
-		memcpy(outBox,boxes + n*inRank*2,inRank*2*sizeof(double));
+		memcpy(outBox,boxes + boxMinIndex*inRank*2,inRank*2*sizeof(double));
+		std::cout << boxesResult[0] << "\t" << boxesResult[n*3] << "\t" << funcMin << "\t" << curEps << "\t" << n << "\n\n";
 		if(curEps < inEps)
 		{
 			*status = 0;
@@ -426,23 +391,25 @@ void fnGetOptValueWithCUDA(double *inBox, int inRank, int inNumBoxesSplitCoeff, 
 }
 
 
-__global__ void calculateLimitsOnCUDA(double *outLimits, const double *inBox,int inRank,int inFunc)
+__global__ void calculateLimitsOnCUDA(double *outLimits, const double *inBox,int inRank,int inFunc, int numBoxes)
 {
     int thread_id = blockIdx.x * BLOCK_SIZE + threadIdx.x;
     
-	switch(inFunc){
-	case 1:
-			fnCalcFunLimitsMultiple2_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
-			break;
-	case 2:
-			fnCalcFunLimitsHypebolic2_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
-			break;
-	case 3:
-			fnCalcFunLimitsAluffiPentini2_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
-			break;
-	case 4:
-			fnCalcFunLimitsRozenbroke_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
-			break;
+	if(thread_id < numBoxes){
+		switch(inFunc){
+		case 1:
+				fnCalcFunLimitsMultiple2_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
+				break;
+		case 2:
+				fnCalcFunLimitsHypebolic2_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
+				break;
+		case 3:
+				fnCalcFunLimitsAluffiPentini2_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
+				break;
+		case 4:
+				fnCalcFunLimitsRozenbroke_CUDA(&inBox[thread_id*inRank*2], inRank, &outLimits[thread_id*3]);
+				break;
+		}
 	}
 }
 
@@ -452,6 +419,7 @@ void sendDataToCuda(double *outLimits, const double *inBox, int inRank, int inFu
 {
     double *dev_outLimits = 0;
     double *dev_inBox = 0;
+
 	int GridSize = ((numBoxes%BLOCK_SIZE == 0) ? numBoxes/BLOCK_SIZE : numBoxes/BLOCK_SIZE + 1);
 	int numThreads = GridSize*BLOCK_SIZE;
 	int sizeOutLimits = numThreads*3*sizeof(double);
@@ -462,35 +430,24 @@ void sendDataToCuda(double *outLimits, const double *inBox, int inRank, int inFu
 	CHECKED_CALL(cudaSetDevice(DEVICE));
     CHECKED_CALL(cudaMalloc((void **)&dev_outLimits, sizeOutLimits));
     CHECKED_CALL(cudaMalloc((void **)&dev_inBox, sizeInBox));
-    //CHECKED_CALL(cudaEventCreate(&start));
-   //CHECKED_CALL(cudaEventCreate(&stop));
-	CHECKED_CALL(cudaMemcpy(dev_inBox, inBox, numBoxes*2*sizeof(double), cudaMemcpyHostToDevice));
+    CHECKED_CALL(cudaEventCreate(&start));
+    CHECKED_CALL(cudaEventCreate(&stop));
+	CHECKED_CALL(cudaMemcpy(dev_inBox, inBox, numBoxes*2*inRank*sizeof(double), cudaMemcpyHostToDevice));
 
-	//CHECKED_CALL(cudaEventRecord(start, 0));
-	calculateLimitsOnCUDA<<<GridSize, BLOCK_SIZE>>>(dev_outLimits, dev_inBox, inRank, inFunc);
+	CHECKED_CALL(cudaEventRecord(start, 0));
+	calculateLimitsOnCUDA<<<GridSize, BLOCK_SIZE>>>(dev_outLimits, dev_inBox, inRank, inFunc,numBoxes);
     CHECKED_CALL(cudaGetLastError());
 
-    //CHECKED_CALL(cudaEventRecord(stop, 0));
+    CHECKED_CALL(cudaEventRecord(stop, 0));
     CHECKED_CALL(cudaDeviceSynchronize());
 
     CHECKED_CALL(cudaMemcpy(outLimits, dev_outLimits, numBoxes*3*sizeof(double), cudaMemcpyDeviceToHost));
 
-	const double *boxes = inBox;
-	for(int n = 0; n < numBoxes; n++)
-		{
-			for(int j=0; j < inRank; j++)
-			{
-				std::cout << "[" << boxes[(n*inRank+j)*2] << ";" << boxes[(n*inRank+j)*2 + 1] << "] ";
-			}
-			
-			std::cout<< "\n";
-		}
-
 	float time;
-   // CHECKED_CALL(cudaEventElapsedTime(&time, start, stop));
+    CHECKED_CALL(cudaEventElapsedTime(&time, start, stop));
 
-   // CHECKED_CALL(cudaEventDestroy(start));
-    //CHECKED_CALL(cudaEventDestroy(stop));
+    CHECKED_CALL(cudaEventDestroy(start));
+    CHECKED_CALL(cudaEventDestroy(stop));
     CHECKED_CALL(cudaFree(dev_outLimits));
     CHECKED_CALL(cudaFree(dev_inBox));
 

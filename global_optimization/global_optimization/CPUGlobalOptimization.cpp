@@ -94,6 +94,18 @@ void fnCalcFunLimitsAluffiPentini2(double *inBox, int inRank, double *outLimits)
 	outLimits[2] = 0.25*pow(x1,4)-0.5*pow(x1,2) + 0.1*x1 + 0.5*pow(x2,2);
 }
 
+
+ double fnCalcFunRozenbroke(double *inBox, int inRank)
+{
+	int i;
+	double val = 0;;
+	for(i = 0; i < inRank - 1; i++)
+	{
+		val += ((1 - inBox[i])*(1 - inBox[i]) + 100.0*(inBox[i+1]-inBox[i]*inBox[i])*(inBox[i+1]-inBox[i]*inBox[i]));
+	}
+	return val;
+}
+
 /**
 *	Calculus Interval for Rozenbroke function on CPU
 *	@param inbox pointer to Box
@@ -154,6 +166,45 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits)
 	outLimits[0] = sub;
 	outLimits[1] = sup;
 	outLimits[2] = val;
+
+
+	double *x;
+	x = (double *) malloc(inRank*sizeof(double));
+	double minFun;
+	int index;
+	double md;
+	double pw;
+	double a1;
+	double b1;
+	int numFunValues = int(pow(2.0,double(inRank)));
+
+	
+	int i,j;
+	
+	for(j = 0; j < inRank; j++){
+			x[j] = (inBox[j*2]+inBox[j*2+1])/2.0;
+	}
+	minFun = fnCalcFunRozenbroke(x, inRank);
+	for(i = 0; i < numFunValues; i++){
+		for(j = 0; j < inRank; j++){
+			a1 = double(i);
+			b1 = double(j+1);
+			md = fmod(a1,pow(2.0,b1));
+			pw = pow(2.0,(b1-1.0));
+			index = int(md / pw);
+			x[j] = inBox[j*2+index];
+		}
+		val = fnCalcFunRozenbroke(x, inRank);
+		if(minFun > val) minFun = val;
+	}
+
+	free(x);
+
+	outLimits[0] = sub;
+	outLimits[1] = sup;
+	outLimits[2] = minFun;
+
+
 
 }
 
@@ -223,6 +274,7 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 				inFun(&boxes[((k*numBoxes + n)*inRank)*2],inRank,&boxesResult[(k*numBoxes + n)*3]);
 			}
 		}
+
 		funcMin = boxesResult[2];
 		boxMinIndex = 0;
 		for(n = 0; n < numRestBoxes*numBoxes; n++)
@@ -262,6 +314,7 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 		*outEps = curEps;
 		*outMin = funcMin;
 		memcpy(outBox,boxes + n*inRank*2,inRank*2*sizeof(double));
+		std::cout << boxesResult[0] << "\t" << boxesResult[n*3] << "\t" << funcMin << "\t" << curEps << "\t" << n << "\n\n";
 		if(curEps < inEps)
 		{
 			*outStatus = 0;

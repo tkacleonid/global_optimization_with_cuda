@@ -296,14 +296,14 @@ c:\program files\nvidia gpu computing toolkit\cuda\v8.0\include\host_defines.h
 c:\program files\nvidia gpu computing toolkit\cuda\v8.0\include\vector_functions.h
 c:\program files\nvidia gpu computing toolkit\cuda\v8.0\include\device_launch_parameters.h
 c:\program files\nvidia gpu computing toolkit\cuda\v8.0\include\vector_types.h
-c:\users\leo\documents\visual studio 2012\projects\global_optimization\global_optimization\CUDAGlobalOptimization.h
+c:\users\leonid\documents\github\global_optimization_with_cuda\global_optimization\global_optimization\CUDAGlobalOptimization.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda_runtime.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\device_launch_parameters.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda_runtime_api.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda_fp16.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda_device_runtime_api.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\math_functions_dbl_ptx3.h
-c:\users\leo\documents\visual studio 2012\projects\global_optimization\global_optimization\interval.h
+c:\users\leonid\documents\github\global_optimization_with_cuda\global_optimization\global_optimization\interval.h
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\iostream
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\istream
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\ostream
@@ -380,6 +380,6 @@ C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\cerrno
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\errno.h
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\crtdefs.h
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\share.h
-c:\users\leo\documents\visual studio 2012\projects\global_optimization\global_optimization\CPUGlobalOptimization.h
-c:\users\leo\documents\visual studio 2012\projects\global_optimization\global_optimization\interval.h
+c:\users\leonid\documents\github\global_optimization_with_cuda\global_optimization\global_optimization\CPUGlobalOptimization.h
+c:\users\leonid\documents\github\global_optimization_with_cuda\global_optimization\global_optimization\interval.h
 C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include\fstream

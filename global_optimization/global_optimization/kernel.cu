@@ -88,16 +88,16 @@ int main()
 	int numTestCycles = 10;
 
 
-	inRank = 3;
+	inRank = 5;
 	for(int i = 0; i < inRank; i++)
 	{
-		inBox[i*2] = -20.0;
-		inBox[i*2+1] = 20.0;
+		inBox[i*2] = -100000.0;
+		inBox[i*2+1] = 100000.0;
 	}
 
 	time(&t_start);
-	//fnGetOptValueOnCPU(inBox, inRank, 2, inEps, inMaxIter, fnCalcFunLimitsMultiple2, outBox,&outMin, &outEps, &status);
-	fnGetOptValueWithCUDA(inBox, inRank, 8, inEps, inMaxIter, 4, outBox,&outMin, &outEps, &status);
+	fnGetOptValueOnCPU(inBox, inRank, 2, inEps, inMaxIter, fnCalcFunLimitsRozenbroke, outBox,&outMin, &outEps, &status);
+	//fnGetOptValueWithCUDA(inBox, inRank, 2, inEps, inMaxIter, 4, outBox,&outMin, &outEps, &status);
 	time(&t_end);
 			
 	//time(&t_start);
