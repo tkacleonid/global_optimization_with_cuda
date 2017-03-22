@@ -224,13 +224,15 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits)
 */
 void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, double inEps, double inMaxIter, void (*inFun)(double *,int,double *), double *outBox, double*outMin, double *outEps,int *outStatus)
 {
-	int numBoxes = pow((double) inNumBoxesSplitCoeff,inRank);
+	int numBoxes = inNumBoxesSplitCoeff;
 	double *boxes =  new double[numBoxes*inRank*2];
 	double *boxesResult = new double[numBoxes*3];
 	double *restBoxes = new double[inRank*2];
 	double *tempRestBoxes = NULL;
 	double *h = new double[inRank];
 	int numNewBoxes = 0;
+	int maxDimensionIndex = -1;
+	double maxDimension = 0.0;
 
 	memcpy(restBoxes,inBox,inRank*2*sizeof(double));
 
@@ -260,6 +262,8 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 
 		for(k = 0; k < numRestBoxes; k++)
 		{
+			maxDimensionIndex = 0;
+			maxDimensionIndex = restBoxes[(k*inRank)*2 + 1] - restBoxes[(k*inRank)*2];
 			for(i = 0; i < inRank; i++)
 			{
 				h[i] = (restBoxes[(k*inRank+i)*2 + 1] - restBoxes[(k*inRank+i)*2])/inNumBoxesSplitCoeff;

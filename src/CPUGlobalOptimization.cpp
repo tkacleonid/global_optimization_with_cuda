@@ -224,18 +224,19 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits)
 */
 void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, double inEps, double inMaxIter, void (*inFun)(double *,int,double *), double *outBox, double*outMin, double *outEps,int *outStatus)
 {
-	int numBoxes = pow((double) inNumBoxesSplitCoeff,inRank);
+	int numBoxes = inNumBoxesSplitCoeff;
 	double *boxes =  new double[numBoxes*inRank*2];
 	double *boxesResult = new double[numBoxes*3];
 	double *restBoxes = new double[inRank*2];
 	double *tempRestBoxes = NULL;
 	double *h = new double[inRank];
 	int numNewBoxes = 0;
+	int maxDimensionIndex = -1;
+	double maxDimension = 0.0;
 
 	memcpy(restBoxes,inBox,inRank*2*sizeof(double));
 
 	int numRestBoxes = 1;
-	int index = 0;
 	double temp;
 
 
@@ -260,21 +261,36 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 
 		for(k = 0; k < numRestBoxes; k++)
 		{
+			maxDimensionIndex = 0;
+			maxDimension = restBoxes[(k*inRank)*2 + 1] - restBoxes[(k*inRank)*2];
 			for(i = 0; i < inRank; i++)
 			{
-				h[i] = (restBoxes[(k*inRank+i)*2 + 1] - restBoxes[(k*inRank+i)*2])/inNumBoxesSplitCoeff;
+				h[i] = (restBoxes[(k*inRank+i)*2 + 1] - restBoxes[(k*inRank+i)*2]);
+				if (maxDimension < h[i]) {
+					maxDimension = h[i];
+					maxDimensionIndex = i;
+				}
+				h[i] /= inNumBoxesSplitCoeff;
+				
 			}
 			for(n = 0; n < numBoxes; n++)
 			{
 				for(i = 0; i < inRank; i++)
 				{
-					index = ((n % numBoxes) % (long) pow((double)inNumBoxesSplitCoeff,i+1))/((long)pow((double)inNumBoxesSplitCoeff,i));
-					boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2] + h[i]*index;
-					boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2] + h[i]*(index+1);
+					if (i==maxDimensionIndex) {
+						boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2] + h[i]*n;
+						boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2] + h[i]*(n+1);
+					} else {
+						boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2];
+						boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2 + 1];
+					}
+					//printf("[%f; %f] ",boxes[((k*numBoxes + n)*inRank+i)*2],boxes[((k*numBoxes + n)*inRank+i)*2+1]);
 				}
+				//printf("\n\n");
 				inFun(&boxes[((k*numBoxes + n)*inRank)*2],inRank,&boxesResult[(k*numBoxes + n)*3]);
 			}
 		}
+		
 
 		funcMin = boxesResult[2];
 		boxMinIndex = 0;
@@ -309,9 +325,9 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 				}
 				if(funcMin > boxesResult[n*3 + 2] ) {funcMin = boxesResult[n*3+2];boxMinIndex = n;}
 			}
-			if(funcMin < boxesResult[(n)*3] + inEps) break;	
+			if(funcMin < boxesResult[(n)*3] - inEps) break;	
 		}
-		curEps = abs(boxesResult[0] - funcMin);
+		curEps = boxesResult[0] - funcMin > 0 ? boxesResult[0] - funcMin : funcMin -boxesResult[0];
 		*outEps = curEps;
 		*outMin = funcMin;
 		memcpy(outBox,boxes + n*inRank*2,inRank*2*sizeof(double));
