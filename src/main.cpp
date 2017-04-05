@@ -10,27 +10,27 @@
 
 int main()
 {
-    int inRank = 2;
+    int inRank = 16;
 	time_t t_start, t_end;
 
 	double *inBox = new double[inRank*2];
 	double *outBox = new double[inRank*2];
 	double outMin = 0.0;
-	double inEps = 0.0001;
+	double inEps = 0.001;
 	double outEps = 0.0;
-	double inMaxIter = 100;
+	double inMaxIter = 1000;
 	int inNumBoxesSplitCoeff = 2;
 	int status = -1;
 
 
 	for(int i = 0; i < inRank; i++)
 	{
-		inBox[i*2] = -20.0;
-		inBox[i*2+1] = 20.0;
+		inBox[i*2] = -200.0;
+		inBox[i*2+1] = 200.0;
 	}
 
 	time(&t_start);
-	fnGetOptValueOnCPU(inBox, inRank, inNumBoxesSplitCoeff, inEps, inMaxIter, fnCalcFunLimitsAluffiPentini2, outBox,&outMin, &outEps, &status);
+	fnGetOptValueOnCPU(inBox, inRank, inNumBoxesSplitCoeff, inEps, inMaxIter, fnCalcFunLimitsRozenbroke, outBox,&outMin, &outEps, &status);
 	time(&t_end);
 
 	std::cout << "Result: ";

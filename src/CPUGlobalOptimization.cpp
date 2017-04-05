@@ -167,7 +167,7 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits)
 	outLimits[1] = sup;
 	outLimits[2] = val;
 
-
+/*
 	double *x;
 	x = (double *) malloc(inRank*sizeof(double));
 	double minFun;
@@ -204,7 +204,7 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits)
 	outLimits[1] = sup;
 	outLimits[2] = minFun;
 
-
+*/
 
 }
 
@@ -224,12 +224,16 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits)
 */
 void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, double inEps, double inMaxIter, void (*inFun)(double *,int,double *), double *outBox, double*outMin, double *outEps,int *outStatus)
 {
-	int numBoxes = inNumBoxesSplitCoeff;
-	double *boxes =  new double[numBoxes*inRank*2];
-	double *boxesResult = new double[numBoxes*3];
-	double *restBoxes = new double[inRank*2];
+	int maxArrayLen = 1000000;
+	int incrementCoeff = 4;
+
+	const int numBoxes = inNumBoxesSplitCoeff;
+
+	double *boxes =  new double[numBoxes*inRank*2*maxArrayLen];
+	double *boxesResult = new double[numBoxes*3*maxArrayLen];
+	double *restBoxes = new double[numBoxes*inRank*2*maxArrayLen];
 	double *tempRestBoxes = NULL;
-	double *h = new double[inRank];
+	double h;
 	int numNewBoxes = 0;
 	int maxDimensionIndex = -1;
 	double maxDimension = 0.0;
@@ -254,45 +258,40 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 
 	
 
-	while((countIter < inMaxIter) && (curEps >= inEps))
+	while(true)
 	{
-		boxes = new double[numRestBoxes*numBoxes*inRank*2];
-		boxesResult = new double[numRestBoxes*numBoxes*3];
-
 		for(k = 0; k < numRestBoxes; k++)
 		{
 			maxDimensionIndex = 0;
 			maxDimension = restBoxes[(k*inRank)*2 + 1] - restBoxes[(k*inRank)*2];
 			for(i = 0; i < inRank; i++)
 			{
-				h[i] = (restBoxes[(k*inRank+i)*2 + 1] - restBoxes[(k*inRank+i)*2]);
-				if (maxDimension < h[i]) {
-					maxDimension = h[i];
+				h = (restBoxes[(k*inRank+i)*2 + 1] - restBoxes[(k*inRank+i)*2]);
+				if (maxDimension < h) {
+					maxDimension = h;
 					maxDimensionIndex = i;
 				}
-				h[i] /= inNumBoxesSplitCoeff;
 				
 			}
+			h = maxDimension/inNumBoxesSplitCoeff;
 			for(n = 0; n < numBoxes; n++)
 			{
 				for(i = 0; i < inRank; i++)
 				{
 					if (i==maxDimensionIndex) {
-						boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2] + h[i]*n;
-						boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2] + h[i]*(n+1);
+						boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2] + h*n;
+						boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2] + h*(n+1);
 					} else {
 						boxes[((k*numBoxes + n)*inRank+i)*2] = restBoxes[(k*inRank+i)*2];
 						boxes[((k*numBoxes + n)*inRank+i)*2 + 1] = restBoxes[(k*inRank+i)*2 + 1];
 					}
-					//printf("[%f; %f] ",boxes[((k*numBoxes + n)*inRank+i)*2],boxes[((k*numBoxes + n)*inRank+i)*2+1]);
 				}
-				//printf("\n\n");
 				inFun(&boxes[((k*numBoxes + n)*inRank)*2],inRank,&boxesResult[(k*numBoxes + n)*3]);
 			}
 		}
 		
 
-		funcMin = boxesResult[2];
+		funcMin = funcMin > boxesResult[2] ? boxesResult[2]  : funcMin;
 		boxMinIndex = 0;
 		for(n = 0; n < numRestBoxes*numBoxes; n++)
 		{
@@ -325,33 +324,48 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 				}
 				if(funcMin > boxesResult[n*3 + 2] ) {funcMin = boxesResult[n*3+2];boxMinIndex = n;}
 			}
-			if(funcMin < boxesResult[(n)*3] - inEps) break;	
+			if(funcMin < boxesResult[(n)*3] + inEps) break;	
 		}
 		curEps = boxesResult[0] - funcMin > 0 ? boxesResult[0] - funcMin : funcMin -boxesResult[0];
 		*outEps = curEps;
 		*outMin = funcMin;
-		memcpy(outBox,boxes + n*inRank*2,inRank*2*sizeof(double));
-		std::cout << boxesResult[0] << "\t" << boxesResult[n*3] << "\t" << funcMin << "\t" << curEps << "\t" << n << "\n\n";
+		memcpy(outBox,boxes + boxMinIndex*inRank*2,inRank*2*sizeof(double));
+		std::cout << "#" << countIter << ": fMinRec = " << funcMin << "\t" << "MinLim = " << boxesResult[0] << "\t" << "StopLimit = " << boxesResult[n*3] << "\t"  << "curEps = " << curEps << "\t"  << "N = " << n << "\n\n";
 		if(curEps < inEps)
 		{
 			*outStatus = 0;
 			return;
 		}
+
+		if(countIter == inMaxIter) {
+			delete [] restBoxes;
+			delete [] boxes;
+			delete [] boxesResult;
+			break;
+		} 
 		numNewBoxes = n;
 
-		tempRestBoxes = new double[numNewBoxes*inRank*2];
-		memcpy(tempRestBoxes,boxes,numNewBoxes*inRank*2*sizeof(double));
-		if(countIter > 0) delete [] restBoxes;
-		restBoxes = tempRestBoxes;
+		if(numRestBoxes > maxArrayLen) {
+			delete [] restBoxes;
+			delete [] boxes;
+			delete [] boxesResult;
 
-		delete [] boxes;
-		delete [] boxesResult;
+			maxArrayLen *= incrementCoeff;
+			boxes = new double[numBoxes*inRank*2*maxArrayLen];
+			restBoxes = new double[numNewBoxes*inRank*2*maxArrayLen];
+			boxesResult = new double[numBoxes*3*maxArrayLen];
+			memcpy(restBoxes,boxes,numNewBoxes*inRank*2*sizeof(double));
+		}
+		else {
+			tempRestBoxes = boxes;
+			boxes = restBoxes;
+			restBoxes = tempRestBoxes;
+		}
 
 		numRestBoxes = numNewBoxes;
 
 		countIter++;
 	}
-	delete [] h;
 }
 
 
