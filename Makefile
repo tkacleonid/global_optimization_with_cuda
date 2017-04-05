@@ -14,9 +14,13 @@ CLINKFLAGS= -O3
 OBJS = ${OBJ}/main.o \
 	${OBJ}/CPUGlobalOptimization.o \
 
-${BINDIR}/${PROGRAM}: ${OBJS}
+${BINDIR}/${PROGRAM}: crdir ${OBJS}
 	${CLINK} ${CLINKFLAGS} -o ${BINDIR}/${PROGRAM} ${OBJS} ${C_LIB}
 
+crdir:
+	mkdir -p obj
+	mkdir -p bin
+	
 ${OBJ}/main.o: ${SRC}/main.cpp ${INC}/interval.h ${INC}/CPUGlobalOptimization.h
 	$(CC) $(CFLAGS) -c ${SRC}/main.cpp -o ${OBJ}/main.o
 ${OBJ}/CPUGlobalOptimization.o: ${SRC}/CPUGlobalOptimization.cpp ${INC}/CPUGlobalOptimization.h 
@@ -24,6 +28,7 @@ ${OBJ}/CPUGlobalOptimization.o: ${SRC}/CPUGlobalOptimization.cpp ${INC}/CPUGloba
 
 
 clean:
-	rm -f ${OBJ}/*.o, rm bin/PROG
+	rm -rf ${OBJ}
+	rm -rf bin
 cleanall:
 	rm -f ${OBJ}/*.o ${BINDIR}/${PROGRAM}
