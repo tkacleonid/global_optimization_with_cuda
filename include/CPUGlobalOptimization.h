@@ -52,5 +52,8 @@ void fnCalcFunLimitsRozenbroke(double *inBox, int inRank, double *outLimits);
 void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, double inEps, double inMaxIter, void (*inFun)(double *,int,double *), double *outBox, double*outMin, double *outEps,int *outStatus);
 
 
+void quickSortBase(double *boxes,double *boxesResult, int inRank, int l, int r);
+void sort_quick_recursive(double *boxes,double *boxesResult, int inRank, int n);
+void fnGetOptValueOnCPUSort(double *inBox, int inRank, int inNumBoxesSplitCoeff, double inEps, double inMaxIter, void (*inFun)(double *,int,double *), double *outBox, double*outMin, double *outEps,int *outStatus);
 
 #endif
