@@ -45,3 +45,16 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+
+/build/*
+/obj/*
+.DS_Store
+*.cmake
+Makefile
+.idea
+CMakeCache.txt
+CMakeFiles
+*.cbp
+Testing/
+*~
