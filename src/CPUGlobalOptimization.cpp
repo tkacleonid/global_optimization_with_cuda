@@ -336,7 +336,7 @@ void fnGetOptValueOnCPU(double *inBox, int inRank, int inNumBoxesSplitCoeff, dou
 		*outEps = curEps;
 		*outMin = funcMin;
 		memcpy(outBox,boxes + boxMinIndex*inRank*2,inRank*2*sizeof(double));
-		//std::cout << "#" << countIter << ": fMinRec = " << funcMin << "\t" << "MinLim = " << boxesResult[0] << "\t" << "StopLimit = " << boxesResult[n*3] << "\t"  << "curEps = " << curEps << "\t"  << "N = " << n << "\t" << "timeSplit = " << (t_end_split_all-t_start_split_all) <<  "\t" << "timeSort = " << (t_end_split_sort-t_start_split_sort) << "\n\n";
+		std::cout << "#" << countIter << ": fMinRec = " << funcMin << "\t" << "MinLim = " << boxesResult[0] << "\t" << "StopLimit = " << boxesResult[n*3] << "\t"  << "curEps = " << curEps << "\t"  << "N = " << n << "\t" << "timeSplit = " << (t_end_split_all-t_start_split_all) <<  "\t" << "timeSort = " << (t_end_split_sort-t_start_split_sort) << "\n\n";
 		if(curEps < inEps)
 		{
 			*outStatus = 0;
@@ -476,11 +476,14 @@ void fnGetOptValueOnCPUSort(double *inBox, int inRank, int inNumBoxesSplitCoeff,
 	clock_t t_start_split_all, t_end_split_all;
 	clock_t t_start_split_sort, t_end_split_sort;
 
+#pragma omp parallel
+        std::cout << "openmp\n";
+
 	while(true)
 	{
 
 		t_start_split_all = clock();
-//#pragma omp parallel for num_threads(4) private(i,n,h,maxDimensionIndex,maxDimension)
+//#pragma omp parallel for private(i,n,h,maxDimensionIndex,maxDimension)
 		for(k = 0; k < numRestBoxes; k++)
 		{
 			maxDimensionIndex = 0;

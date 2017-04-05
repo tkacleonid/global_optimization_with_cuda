@@ -5,10 +5,10 @@ OBJ = obj
 INC = include
 
 CC     = g++
-CLINK  = $(CC)
+CLINK  = $(CC) 
 C_LIB  = -lm
-CFLAGS = -Wall -O3 -I${INC}
-CLINKFLAGS= -O3 
+CFLAGS = -std=c++14 -Wall -O3 -I${INC} -fopenmp
+CLINKFLAGS= -O3 -fopenmp
 
 
 OBJS = ${OBJ}/main.o \
