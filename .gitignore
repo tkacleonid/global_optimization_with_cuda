@@ -49,6 +49,7 @@ Temporary Items
 
 /build/*
 /obj/*
+/bin/*
 .DS_Store
 *.cmake
 Makefile

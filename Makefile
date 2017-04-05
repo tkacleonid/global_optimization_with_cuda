@@ -24,6 +24,6 @@ ${OBJ}/CPUGlobalOptimization.o: ${SRC}/CPUGlobalOptimization.cpp ${INC}/CPUGloba
 
 
 clean:
-	rm -f ${OBJ}/*.o
+	rm -f ${OBJ}/*.o, rm bin/PROG
 cleanall:
 	rm -f ${OBJ}/*.o ${BINDIR}/${PROGRAM}
